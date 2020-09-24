@@ -16,17 +16,18 @@
  */
 package sterkeespresso.nifi.processors;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Map;
+
 import net.lingala.zip4j.io.inputstream.ZipInputStream;
 import net.lingala.zip4j.io.outputstream.ZipOutputStream;
 import net.lingala.zip4j.model.LocalFileHeader;
 import net.lingala.zip4j.model.ZipParameters;
 import net.lingala.zip4j.model.enums.CompressionMethod;
-import org.apache.nifi.processor.io.StreamCallback;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Map;
+import org.apache.nifi.processor.io.StreamCallback;
 
 public class Zip4jEncryptor implements DecryptArchive.Encryptor {
     private char[] password;

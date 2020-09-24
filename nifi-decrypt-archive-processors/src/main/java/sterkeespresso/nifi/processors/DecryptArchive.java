@@ -16,8 +16,18 @@
  */
 package sterkeespresso.nifi.processors;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+
 import net.lingala.zip4j.io.inputstream.ZipInputStream;
 import net.lingala.zip4j.model.LocalFileHeader;
+
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.nifi.annotation.behavior.ReadsAttribute;
 import org.apache.nifi.annotation.behavior.ReadsAttributes;
@@ -40,15 +50,6 @@ import org.apache.nifi.processor.io.StreamCallback;
 import org.apache.nifi.processor.util.StandardValidators;
 import org.apache.nifi.stream.io.StreamUtils;
 import org.apache.nifi.util.StopWatch;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 
 @Tags({"example"})
 @CapabilityDescription("Provide a description")
@@ -158,6 +159,7 @@ public class DecryptArchive extends AbstractProcessor {
             case DECRYPT_ONLY_MODE:
                 Encryptor encryptor;
                 StreamCallback callback;
+                FlowFile decrypted = session.clone(flowFile);
 
                 try {
                     encryptor = new Zip4jEncryptor(password.toCharArray());
@@ -171,20 +173,30 @@ public class DecryptArchive extends AbstractProcessor {
 
                 try {
                     final StopWatch stopWatch = new StopWatch(true);
-                    flowFile = session.write(flowFile, callback);
+                    decrypted = session.write(decrypted, callback);
+
+                    if (decrypted.getSize() == 0) {
+                        logger.error("Unable to decrypt {} because it does not appear to have any entries; routing to failure", new Object[]{flowFile});
+                        session.transfer(flowFile, REL_FAILURE);
+                        session.remove(decrypted);
+                        return;
+                    }
 
                     // Update the flowfile attributes
                     Map<String, String> clonedAttributes = new HashMap<>(flowFile.getAttributes());
                     encryptor.updateAttributes(clonedAttributes);
-                    flowFile = session.putAllAttributes(flowFile, clonedAttributes);
+                    decrypted = session.putAllAttributes(decrypted, clonedAttributes);
 
-                    logger.info("Successfully decrypted {}", new Object[]{flowFile});
-                    session.getProvenanceReporter().modifyContent(flowFile, stopWatch.getElapsed(TimeUnit.MILLISECONDS));
-                    session.transfer(flowFile, REL_SUCCESS);
+                    session.getProvenanceReporter().modifyContent(decrypted, stopWatch.getElapsed(TimeUnit.MILLISECONDS));
+                    session.transfer(decrypted, REL_SUCCESS);
+                    session.transfer(flowFile, REL_ORIGINAL);
+                    logger.info("Successfully decrypted {} to {}", new Object[]{flowFile, decrypted});
                 } catch (final ProcessException e) {
                     logger.error("Cannot decrypt {} - ", new Object[]{flowFile, e});
                     session.transfer(flowFile, REL_FAILURE);
+                    session.remove(decrypted);
                 }
+                break;
 
             case DECRYPT_UNPACK_MODE:
                 final Unpacker unpacker = new Zip4jUnpacker(filter, password.toCharArray());
@@ -209,8 +221,7 @@ public class DecryptArchive extends AbstractProcessor {
                     session.transfer(flowFile, REL_FAILURE);
                     session.remove(unpacked);
                 }
-            default:
-
+                break;
         }
     }
 
