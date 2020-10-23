@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sterkeespresso.nifi.processors;
+package nl.sterkeespresso.nifi.processors;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +29,6 @@ import net.lingala.zip4j.io.inputstream.ZipInputStream;
 import net.lingala.zip4j.model.LocalFileHeader;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.nifi.annotation.behavior.ReadsAttribute;
 import org.apache.nifi.annotation.behavior.ReadsAttributes;
 import org.apache.nifi.annotation.behavior.WritesAttribute;
 import org.apache.nifi.annotation.behavior.WritesAttributes;
@@ -51,15 +50,24 @@ import org.apache.nifi.processor.util.StandardValidators;
 import org.apache.nifi.stream.io.StreamUtils;
 import org.apache.nifi.util.StopWatch;
 
-@Tags({"example"})
-@CapabilityDescription("Provide a description")
+@Tags({"decryption", "password", "unpack", "un-merge", "zip", "archive"})
+@CapabilityDescription("Decrypts and optionally unpacks the content of FlowFiles that have been packaged and encrypted using the zip format.")
+@ReadsAttributes({})
+@WritesAttributes({
+        @WritesAttribute(attribute = "mime.type", description = "If the FlowFile is successfully unpacked, its MIME Type is no longer known, so the mime.type "
+                + "attribute is set to application/octet-stream."),
+        @WritesAttribute(attribute = "fragment.identifier", description = "All unpacked FlowFiles produced from the same parent FlowFile will have the same randomly generated "
+                + "UUID added for this attribute"),
+        @WritesAttribute(attribute = "fragment.index", description = "A one-up number that indicates the ordering of the unpacked FlowFiles that were created from a single "
+                + "parent FlowFile"),
+        @WritesAttribute(attribute = "fragment.count", description = "The number of unpacked FlowFiles generated from the parent FlowFile"),
+        @WritesAttribute(attribute = "segment.original.filename ", description = "The filename of the parent FlowFile. Extension .zip is removed because "
+                + "the MergeContent processor automatically adds those extensions if it is used to rebuild the original FlowFile")})
 @SeeAlso({})
-@ReadsAttributes({@ReadsAttribute(attribute="", description="")})
-@WritesAttributes({@WritesAttribute(attribute="", description="")})
 public class DecryptArchive extends AbstractProcessor {
 
-    public static final String DECRYPT_ONLY_MODE = "DecryptOnly";
-    public static final String DECRYPT_UNPACK_MODE = "DecryptUnpack";
+    public static final String DECRYPT_ONLY_MODE = "Decrypt only";
+    public static final String DECRYPT_UNPACK_MODE = "Decrypt and unpack";
 
     // attribute keys
     public static final String FRAGMENT_ID = FragmentAttributes.FRAGMENT_ID.key();
@@ -89,7 +97,7 @@ public class DecryptArchive extends AbstractProcessor {
 
     public static final PropertyDescriptor FILE_FILTER = new PropertyDescriptor.Builder()
             .name("File Filter")
-            .description("Only files contained in the archive whose names match the given regular expression will be processed")
+            .description("Only files contained in the archive whose names match the given regular expression will be processed (unpack only)")
             .required(true)
             .defaultValue(".*")
             .addValidator(StandardValidators.REGULAR_EXPRESSION_VALIDATOR)
@@ -238,7 +246,7 @@ public class DecryptArchive extends AbstractProcessor {
         }
 
         String originalFilename = source.getAttribute(CoreAttributes.FILENAME.key());
-        if (originalFilename.endsWith(".tar") || originalFilename.endsWith(".zip") || originalFilename.endsWith(".pkg")) {
+        if (originalFilename.endsWith(".zip")) {
             originalFilename = originalFilename.substring(0, originalFilename.length() - 4);
         }
 

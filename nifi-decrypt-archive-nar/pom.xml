@@ -17,7 +17,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>sterkeespresso</groupId>
+        <groupId>nl.sterkeespresso.nifi</groupId>
         <artifactId>nifi-decrypt-archive</artifactId>
         <version>1.0</version>
     </parent>
@@ -32,7 +32,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>sterkeespresso</groupId>
+            <groupId>nl.sterkeespresso.nifi</groupId>
             <artifactId>nifi-decrypt-archive-processors</artifactId>
             <version>1.0</version>
         </dependency>

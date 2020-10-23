@@ -30,7 +30,12 @@ reliable system to process and distribute data.
 
 ## NiFi Decrypt Archive
 
-ToDo: Add a nice introduction of the custom processor here
+Decrypts and optionally unpacks the content of FlowFiles that have been
+packaged and encrypted using the zip format.
+
+This custom NiFi processor uses the Lingala Zip4j libraries to decrypt and
+copy the contents of a zip file into a new unencrypted zip file or into one
+or more unpacked files using streams.
 
 ## License
 

@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sterkeespresso.nifi.processors;
+package nl.sterkeespresso.nifi.processors;
 
-import static sterkeespresso.nifi.processors.DecryptArchive.FRAGMENT_COUNT;
+import static nl.sterkeespresso.nifi.processors.DecryptArchive.FRAGMENT_COUNT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

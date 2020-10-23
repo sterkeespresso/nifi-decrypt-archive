@@ -14,12 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sterkeespresso.nifi.processors;
+package nl.sterkeespresso.nifi.processors;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
+import java.util.zip.ZipEntry;
 
 import net.lingala.zip4j.io.inputstream.ZipInputStream;
 import net.lingala.zip4j.io.outputstream.ZipOutputStream;
@@ -28,6 +29,7 @@ import net.lingala.zip4j.model.ZipParameters;
 import net.lingala.zip4j.model.enums.CompressionMethod;
 
 import org.apache.nifi.processor.io.StreamCallback;
+import org.apache.nifi.stream.io.StreamUtils;
 
 public class Zip4jEncryptor implements DecryptArchive.Encryptor {
     private char[] password;
@@ -66,20 +68,15 @@ public class Zip4jEncryptor implements DecryptArchive.Encryptor {
             zipParameters.setEncryptFiles(false);
 
             LocalFileHeader zipEntry;
-            byte[] readBuffer = new byte[4096];
-            int readLen;
-
             try (final ZipInputStream zipIn = new ZipInputStream(in, password)) {
                 while ((zipEntry = zipIn.getNextEntry()) != null) {
-                    zipParameters.setEntrySize(zipEntry.getUncompressedSize());
-                    zipParameters.setFileNameInZip(zipEntry.getFileName());
-                    zipOut.putNextEntry(zipParameters);
-
-                    while ((readLen = zipIn.read(readBuffer)) != -1) {
-                        zipOut.write(readBuffer, 0, readLen);
+                    if (!zipEntry.isDirectory()) {
+                        zipParameters.setEntrySize(zipEntry.getUncompressedSize());
+                        zipParameters.setFileNameInZip(zipEntry.getFileName());
+                        zipOut.putNextEntry(new ZipEntry(zipEntry.getFileName()));
+                        StreamUtils.copy(zipIn, zipOut);
+                        zipOut.closeEntry();
                     }
-
-                    zipOut.closeEntry();
                 }
             }
         }
