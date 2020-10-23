@@ -73,7 +73,7 @@ public class Zip4jEncryptor implements DecryptArchive.Encryptor {
                     if (!zipEntry.isDirectory()) {
                         zipParameters.setEntrySize(zipEntry.getUncompressedSize());
                         zipParameters.setFileNameInZip(zipEntry.getFileName());
-                        zipOut.putNextEntry(new ZipEntry(zipEntry.getFileName()));
+                        zipOut.putNextEntry(zipParameters);
                         StreamUtils.copy(zipIn, zipOut);
                         zipOut.closeEntry();
                     }
