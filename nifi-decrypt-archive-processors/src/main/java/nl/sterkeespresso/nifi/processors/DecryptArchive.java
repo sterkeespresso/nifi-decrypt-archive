@@ -183,7 +183,7 @@ public class DecryptArchive extends AbstractProcessor {
                     final StopWatch stopWatch = new StopWatch(true);
                     decrypted = session.write(decrypted, callback);
 
-                    if (decrypted.getSize() == 0) {
+                    if (decrypted.getSize() <= 22) {
                         logger.error("Unable to decrypt {} because it does not appear to have any entries; routing to failure", new Object[]{flowFile});
                         session.transfer(flowFile, REL_FAILURE);
                         session.remove(decrypted);

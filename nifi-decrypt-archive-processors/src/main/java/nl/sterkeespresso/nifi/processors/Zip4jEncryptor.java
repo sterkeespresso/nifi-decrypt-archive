@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
-import java.util.zip.ZipEntry;
 
 import net.lingala.zip4j.io.inputstream.ZipInputStream;
 import net.lingala.zip4j.io.outputstream.ZipOutputStream;
@@ -63,14 +62,13 @@ public class Zip4jEncryptor implements DecryptArchive.Encryptor {
         @Override
         public void process(InputStream in, OutputStream out) throws IOException {
             ZipOutputStream zipOut = new ZipOutputStream(out);
-            ZipParameters zipParameters = new ZipParameters();
-            zipParameters.setCompressionMethod(CompressionMethod.STORE);
-            zipParameters.setEncryptFiles(false);
-
             LocalFileHeader zipEntry;
             try (final ZipInputStream zipIn = new ZipInputStream(in, password)) {
                 while ((zipEntry = zipIn.getNextEntry()) != null) {
                     if (!zipEntry.isDirectory()) {
+                        ZipParameters zipParameters = new ZipParameters();
+                        zipParameters.setCompressionMethod(CompressionMethod.STORE);
+                        zipParameters.setEncryptFiles(false);
                         zipParameters.setEntrySize(zipEntry.getUncompressedSize());
                         zipParameters.setFileNameInZip(zipEntry.getFileName());
                         zipOut.putNextEntry(zipParameters);
@@ -79,6 +77,7 @@ public class Zip4jEncryptor implements DecryptArchive.Encryptor {
                     }
                 }
             }
+            zipOut.close();
         }
     }
 }
