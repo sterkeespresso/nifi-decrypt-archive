@@ -25,6 +25,7 @@ import net.lingala.zip4j.io.inputstream.ZipInputStream;
 import net.lingala.zip4j.io.outputstream.ZipOutputStream;
 import net.lingala.zip4j.model.LocalFileHeader;
 import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.model.enums.CompressionLevel;
 import net.lingala.zip4j.model.enums.CompressionMethod;
 
 import org.apache.nifi.processor.io.StreamCallback;
@@ -64,6 +65,7 @@ public class Zip4jEncryptor implements DecryptArchive.Encryptor {
             ZipOutputStream zipOut = new ZipOutputStream(out);
             ZipParameters zipParameters = new ZipParameters();
             zipParameters.setCompressionMethod(CompressionMethod.STORE);
+            zipParameters.setCompressionLevel(CompressionLevel.ULTRA);
             zipParameters.setEncryptFiles(false);
 
             LocalFileHeader zipEntry;

@@ -19,7 +19,7 @@
     <parent>
         <groupId>nl.sterkeespresso.nifi</groupId>
         <artifactId>nifi-decrypt-archive</artifactId>
-        <version>1.0</version>
+        <version>1.1</version>
     </parent>
 
     <artifactId>nifi-decrypt-archive-processors</artifactId>
